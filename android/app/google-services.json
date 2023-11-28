@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "715814899425",
+    "project_id": "colortaxi-customer",
+    "storage_bucket": "colortaxi-customer.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:715814899425:android:a1ea8e212c6f97384f31a0",
+        "android_client_info": {
+          "package_name": "com.colortaxi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvRAeiekddX0Jm5VOA6RYURAkivl6reJU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
