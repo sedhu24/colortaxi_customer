@@ -35,12 +35,12 @@ class _RouteViewScreenState extends State<RouteViewScreen> {
 
   PolylinePoints polylinePoints = PolylinePoints();
 
-  BitmapDescriptor? departureIcon;
+  BitmapDescriptor? PickupIcon;
   BitmapDescriptor? destinationIcon;
   BitmapDescriptor? taxiIcon;
   BitmapDescriptor? stopIcon;
 
-  late LatLng departureLatLong;
+  late LatLng PickupLatLong;
   late LatLng destinationLatLong;
 
   final Map<String, Marker> _markers = {};
@@ -65,8 +65,7 @@ class _RouteViewScreenState extends State<RouteViewScreen> {
       type = argumentData['type'];
       rideData = argumentData['data'];
 
-      departureLatLong = LatLng(
-          double.parse(rideData!.latitudeDepart.toString()),
+      PickupLatLong = LatLng(double.parse(rideData!.latitudeDepart.toString()),
           double.parse(rideData!.longitudeDepart.toString()));
       destinationLatLong = LatLng(
           double.parse(rideData!.latitudeArrivee.toString()),
@@ -97,13 +96,13 @@ class _RouteViewScreenState extends State<RouteViewScreen> {
             var latitude = event['driver_latitude'];
             var longLatitude = event['driver_longitude'];
             var rotation = event['rotation'];
-            departureLatLong = LatLng(double.parse(latitude.toString()),
+            PickupLatLong = LatLng(double.parse(latitude.toString()),
                 double.parse(longLatitude.toString()));
             _markers[rideData!.id.toString()] = Marker(
                 markerId: MarkerId(rideData!.id.toString()),
                 infoWindow:
                     InfoWindow(title: rideData!.prenomConducteur.toString()),
-                position: departureLatLong,
+                position: PickupLatLong,
                 icon: taxiIcon!,
                 rotation: rotation);
             getDirections(dLat: latitude, dLng: longLatitude);
@@ -122,7 +121,7 @@ class _RouteViewScreenState extends State<RouteViewScreen> {
             ),
             "assets/icons/pickup.png")
         .then((value) {
-      departureIcon = value;
+      PickupIcon = value;
     });
 
     BitmapDescriptor.fromAssetImage(
@@ -170,8 +169,8 @@ class _RouteViewScreenState extends State<RouteViewScreen> {
               ),
               onMapCreated: (GoogleMapController controller) {
                 _controller = controller;
-                _controller!.moveCamera(
-                    CameraUpdate.newLatLngZoom(departureLatLong, 12));
+                _controller!
+                    .moveCamera(CameraUpdate.newLatLngZoom(PickupLatLong, 12));
               },
               polylines: Set<Polyline>.of(polyLines.values),
               markers: _markers.values.toSet(),
@@ -1172,7 +1171,7 @@ class _RouteViewScreenState extends State<RouteViewScreen> {
     } else {
       result = await polylinePoints.getRouteBetweenCoordinates(
         Constant.kGoogleApiKey.toString(),
-        PointLatLng(departureLatLong.latitude, departureLatLong.longitude),
+        PointLatLng(PickupLatLong.latitude, PickupLatLong.longitude),
         PointLatLng(destinationLatLong.latitude, destinationLatLong.longitude),
         wayPoints: wayPointList,
         optimizeWaypoints: true,
@@ -1180,12 +1179,12 @@ class _RouteViewScreenState extends State<RouteViewScreen> {
       );
     }
 
-    _markers['Departure'] = Marker(
-      markerId: const MarkerId('Departure'),
-      infoWindow: const InfoWindow(title: "Departure"),
+    _markers['Pickup'] = Marker(
+      markerId: const MarkerId('Pickup'),
+      infoWindow: const InfoWindow(title: "Pickup"),
       position: LatLng(double.parse(rideData!.latitudeDepart.toString()),
           double.parse(rideData!.longitudeDepart.toString())),
-      icon: departureIcon!,
+      icon: PickupIcon!,
     );
 
     _markers['Destination'] = Marker(

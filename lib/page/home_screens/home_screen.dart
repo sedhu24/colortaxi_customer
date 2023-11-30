@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:colortaxi/constant/constant.dart';
 import 'package:colortaxi/constant/show_toast_dialog.dart';
@@ -34,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
       tilt: 0,
       bearing: 0);
 
-  final TextEditingController departureController = TextEditingController();
+  final TextEditingController PickupController = TextEditingController();
   final TextEditingController destinationController = TextEditingController();
 
   final controller = Get.put(HomeController());
@@ -44,12 +46,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final Map<String, Marker> _markers = {};
 
-  BitmapDescriptor? departureIcon;
+  BitmapDescriptor? PickupIcon;
   BitmapDescriptor? destinationIcon;
   BitmapDescriptor? taxiIcon;
   BitmapDescriptor? stopIcon;
 
-  LatLng? departureLatLong;
+  LatLng? PickupLatLong;
   LatLng? destinationLatLong;
 
   Map<PolylineId, Polyline> polyLines = {};
@@ -71,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             "assets/icons/pickup.png")
         .then((value) {
-      departureIcon = value;
+      PickupIcon = value;
     });
 
     // DropOff
@@ -140,8 +142,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void getCurrentLocation(bool isDepartureSet) async {
-    if (isDepartureSet) {
+  void getCurrentLocation(bool isPickupSet) async {
+    if (isPickupSet) {
       LocationData location = await currentLocation.getLocation();
       List<get_cord_address.Placemark> placeMarks =
           await get_cord_address.placemarkFromCoordinates(
@@ -166,9 +168,9 @@ class _HomeScreenState extends State<HomeScreen> {
           (placeMarks.first.postalCode!.isEmpty
               ? ''
               : "${placeMarks.first.postalCode}, ");
-      departureController.text = address;
+      PickupController.text = address;
       setState(() {
-        setDepartureMarker(
+        setPickupMarker(
             LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0));
       });
     }
@@ -259,10 +261,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                           .placeSelectAPI(context)
                                           .then((value) {
                                         if (value != null) {
-                                          departureController.text = value
+                                          PickupController.text = value
                                               .result.formattedAddress
                                               .toString();
-                                          setDepartureMarker(LatLng(
+                                          setPickupMarker(LatLng(
                                               value.result.geometry!.location
                                                   .lat,
                                               value.result.geometry!.location
@@ -271,8 +273,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       });
                                     },
                                     child: buildTextField(
-                                      title: "Departure".tr,
-                                      textController: departureController,
+                                      title: "Pickup".tr,
+                                      textController: PickupController,
                                     ),
                                   ),
                                 ),
@@ -290,108 +292,109 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           );
                         }),
-                        ReorderableListView(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: <Widget>[
-                            for (int index = 0;
-                                index < controller.multiStopListNew.length;
-                                index += 1)
-                              Container(
-                                key: ValueKey(
-                                    controller.multiStopListNew[index]),
-                                child: Column(
-                                  children: [
-                                    const Divider(),
-                                    InkWell(
-                                        onTap: () async {
-                                          await controller
-                                              .placeSelectAPI(context)
-                                              .then((value) {
-                                            if (value != null) {
-                                              controller.multiStopListNew[index]
-                                                      .editingController.text =
-                                                  value.result.formattedAddress
-                                                      .toString();
-                                              controller.multiStopListNew[index]
-                                                      .latitude =
-                                                  value.result.geometry!
-                                                      .location.lat
-                                                      .toString();
-                                              controller.multiStopListNew[index]
-                                                      .longitude =
-                                                  value.result.geometry!
-                                                      .location.lng
-                                                      .toString();
-                                              setStopMarker(
-                                                  LatLng(
-                                                      value.result.geometry!
-                                                          .location.lat,
-                                                      value.result.geometry!
-                                                          .location.lng),
-                                                  index);
-                                            }
-                                          });
-                                        },
-                                        child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                String.fromCharCode(index + 65),
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: ConstantColors
-                                                        .hintTextColor),
-                                              ),
-                                              const SizedBox(
-                                                width: 5,
-                                              ),
-                                              Expanded(
-                                                child: buildTextField(
-                                                  title:
-                                                      "Where do you want to stop ?"
-                                                          .tr,
-                                                  textController: controller
-                                                      .multiStopListNew[index]
-                                                      .editingController,
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                width: 5,
-                                              ),
-                                              InkWell(
-                                                onTap: () {
-                                                  controller.removeStops(index);
-                                                  _markers
-                                                      .remove("Stop $index");
-                                                  getDirections();
-                                                },
-                                                child: Icon(
-                                                  Icons.close,
-                                                  size: 25,
-                                                  color: ConstantColors
-                                                      .hintTextColor,
-                                                ),
-                                              )
-                                            ])),
-                                  ],
-                                ),
-                              ),
-                          ],
-                          onReorder: (int oldIndex, int newIndex) {
-                            setState(() {
-                              if (oldIndex < newIndex) {
-                                newIndex -= 1;
-                              }
-                              final AddStopModel item = controller
-                                  .multiStopListNew
-                                  .removeAt(oldIndex);
-                              controller.multiStopListNew
-                                  .insert(newIndex, item);
-                            });
-                          },
-                        ),
+                        //
+                        // ReorderableListView(
+                        //   shrinkWrap: true,
+                        //   physics: const NeverScrollableScrollPhysics(),
+                        //   children: <Widget>[
+                        //     for (int index = 0;
+                        //         index < controller.multiStopListNew.length;
+                        //         index += 1)
+                        //       Container(
+                        //         key: ValueKey(
+                        //             controller.multiStopListNew[index]),
+                        //         child: Column(
+                        //           children: [
+                        //             const Divider(),
+                        //             InkWell(
+                        //                 onTap: () async {
+                        //                   await controller
+                        //                       .placeSelectAPI(context)
+                        //                       .then((value) {
+                        //                     if (value != null) {
+                        //                       controller.multiStopListNew[index]
+                        //                               .editingController.text =
+                        //                           value.result.formattedAddress
+                        //                               .toString();
+                        //                       controller.multiStopListNew[index]
+                        //                               .latitude =
+                        //                           value.result.geometry!
+                        //                               .location.lat
+                        //                               .toString();
+                        //                       controller.multiStopListNew[index]
+                        //                               .longitude =
+                        //                           value.result.geometry!
+                        //                               .location.lng
+                        //                               .toString();
+                        //                       setStopMarker(
+                        //                           LatLng(
+                        //                               value.result.geometry!
+                        //                                   .location.lat,
+                        //                               value.result.geometry!
+                        //                                   .location.lng),
+                        //                           index);
+                        //                     }
+                        //                   });
+                        //                 },
+                        //                 child: Row(
+                        //                     crossAxisAlignment:
+                        //                         CrossAxisAlignment.center,
+                        //                     children: [
+                        //                       Text(
+                        //                         String.fromCharCode(index + 65),
+                        //                         style: TextStyle(
+                        //                             fontSize: 16,
+                        //                             color: ConstantColors
+                        //                                 .hintTextColor),
+                        //                       ),
+                        //                       const SizedBox(
+                        //                         width: 5,
+                        //                       ),
+                        //                       Expanded(
+                        //                         child: buildTextField(
+                        //                           title:
+                        //                               "Where do you want to stop ?"
+                        //                                   .tr,
+                        //                           textController: controller
+                        //                               .multiStopListNew[index]
+                        //                               .editingController,
+                        //                         ),
+                        //                       ),
+                        //                       const SizedBox(
+                        //                         width: 5,
+                        //                       ),
+                        //                       InkWell(
+                        //                         onTap: () {
+                        //                           controller.removeStops(index);
+                        //                           _markers
+                        //                               .remove("Stop $index");
+                        //                           getDirections();
+                        //                         },
+                        //                         child: Icon(
+                        //                           Icons.close,
+                        //                           size: 25,
+                        //                           color: ConstantColors
+                        //                               .hintTextColor,
+                        //                         ),
+                        //                       )
+                        //                     ])),
+                        //           ],
+                        //         ),
+                        //       ),
+                        //   ],
+                        //   onReorder: (int oldIndex, int newIndex) {
+                        //     setState(() {
+                        //       if (oldIndex < newIndex) {
+                        //         newIndex -= 1;
+                        //       }
+                        //       final AddStopModel item = controller
+                        //           .multiStopListNew
+                        //           .removeAt(oldIndex);
+                        //       controller.multiStopListNew
+                        //           .insert(newIndex, item);
+                        //     });
+                        //   },
+                        // ),
 
                         const Divider(),
                         Row(
@@ -466,13 +469,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         //                             value.result.geometry!
                         //                                 .location.lng
                         //                                 .toString();
-                        //                         setStopMarker(
-                        //                             LatLng(
-                        //                                 value.result.geometry!
-                        //                                     .location.lat,
-                        //                                 value.result.geometry!
-                        //                                     .location.lng),
-                        //                             index);
+                        //                         // setStopMarker(
+                        //                         //     LatLng(
+                        //                         //         value.result.geometry!
+                        //                         //             .location.lat,
+                        //                         //         value.result.geometry!
+                        //                         //             .location.lng),
+                        //                         //     index);
                         //                       }
                         //                     });
                         //                   },
@@ -522,80 +525,82 @@ class _HomeScreenState extends State<HomeScreen> {
                         //             ),
                         //           ),
                         //         ),
-                        // child: Column(
-                        //   children: [
-                        //     const Divider(),
-                        //     InkWell(
-                        //       onTap: () async {
-                        //         await controller
-                        //             .placeSelectAPI(context)
-                        //             .then((value) {
-                        //           if (value != null) {
-                        //             controller.multiStopList[index]
-                        //                     .editingController.text =
-                        //                 value.result.formattedAddress
-                        //                     .toString();
-                        //             controller.multiStopList[index]
-                        //                     .latitude =
-                        //                 value.result.geometry!.location
-                        //                     .lat
-                        //                     .toString();
-                        //             controller.multiStopList[index]
-                        //                     .longitude =
-                        //                 value.result.geometry!.location
-                        //                     .lng
-                        //                     .toString();
-                        //             setStopMarker(
-                        //                 LatLng(
-                        //                     value.result.geometry!
-                        //                         .location.lat,
-                        //                     value.result.geometry!
-                        //                         .location.lng),
-                        //                 index);
-                        //           }
-                        //         });
-                        //       },
-                        //       child: Row(
-                        //         crossAxisAlignment:
-                        //             CrossAxisAlignment.center,
-                        //         children: [
-                        //           Icon(
-                        //             Icons.location_on_outlined,
-                        //             size: 25,
-                        //             color: ConstantColors.hintTextColor,
-                        //           ),
-                        //           SizedBox(
-                        //             width: 5,
-                        //           ),
-                        //           Expanded(
-                        //             child: buildTextField(
-                        //               title:
-                        //                   "Where do you want to stop ?",
-                        //               textController: controller
-                        //                   .multiStopList[index]
-                        //                   .editingController,
+                        //         child: Column(
+                        //           children: [
+                        //             const Divider(),
+                        //             InkWell(
+                        //               onTap: () async {
+                        //                 await controller
+                        //                     .placeSelectAPI(context)
+                        //                     .then((value) {
+                        //                   if (value != null) {
+                        //                     controller.multiStopList[index]
+                        //                             .editingController.text =
+                        //                         value.result.formattedAddress
+                        //                             .toString();
+                        //                     controller.multiStopList[index]
+                        //                             .latitude =
+                        //                         value.result.geometry!.location
+                        //                             .lat
+                        //                             .toString();
+                        //                     controller.multiStopList[index]
+                        //                             .longitude =
+                        //                         value.result.geometry!.location
+                        //                             .lng
+                        //                             .toString();
+                        //                     // setStopMarker(
+                        //                     //     LatLng(
+                        //                     //         value.result.geometry!
+                        //                     //             .location.lat,
+                        //                     //         value.result.geometry!
+                        //                     //             .location.lng),
+                        //                     //     index);
+                        //                   }
+                        //                 });
+                        //               },
+                        //               child: Row(
+                        //                 crossAxisAlignment:
+                        //                     CrossAxisAlignment.center,
+                        //                 children: [
+                        //                   Icon(
+                        //                     Icons.location_on_outlined,
+                        //                     size: 25,
+                        //                     color: ConstantColors.hintTextColor,
+                        //                   ),
+                        //                   SizedBox(
+                        //                     width: 5,
+                        //                   ),
+                        //                   Expanded(
+                        //                     child: buildTextField(
+                        //                       title:
+                        //                           "Where do you want to stop ?",
+                        //                       textController: controller
+                        //                           .multiStopList[index]
+                        //                           .editingController,
+                        //                     ),
+                        //                   ),
+                        //                   SizedBox(
+                        //                     width: 5,
+                        //                   ),
+                        //                   // Stop Marker
+                        //
+                        //                   // InkWell(
+                        //                   //   onTap: () {
+                        //                   //     controller.removeStops(index);
+                        //                   //     _markers.remove("Stop $index");
+                        //                   //     getDirections();
+                        //                   //   },
+                        //                   //   child: Icon(
+                        //                   //     Icons.close,
+                        //                   //     size: 25,
+                        //                   //     color:
+                        //                   //         ConstantColors.hintTextColor,
+                        //                   //   ),
+                        //                   // ),
+                        //                 ],
+                        //               ),
                         //             ),
-                        //           ),
-                        //           SizedBox(
-                        //             width: 5,
-                        //           ),
-                        //           InkWell(
-                        //             onTap: () {
-                        //               controller.removeStops(index);
-                        //               _markers.remove("Stop $index");
-                        //               getDirections();
-                        //             },
-                        //             child: Icon(
-                        //               Icons.close,
-                        //               size: 25,
-                        //               color:
-                        //                   ConstantColors.hintTextColor,
-                        //             ),
-                        //           ),
-                        //         ],
-                        //       ),
-                        //     ),
-                        //   ],
+                        //           ],
                         //         ),
                         //       );
                         //     }),
@@ -645,21 +650,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  setDepartureMarker(LatLng departure) {
+  // Marker For Pickup
+  setPickupMarker(LatLng Pickup) {
     setState(() {
-      _markers.remove("Departure");
-      _markers['Departure'] = Marker(
-        markerId: const MarkerId('Departure'),
-        infoWindow: const InfoWindow(title: "Departure"),
-        position: departure,
-        icon: departureIcon!,
+      _markers.remove("Pickup");
+      _markers['Pickup'] = Marker(
+        markerId: const MarkerId('Pickup'),
+        infoWindow: const InfoWindow(title: "Pickup"),
+        position: Pickup,
+        icon: PickupIcon!,
       );
-      departureLatLong = departure;
+      PickupLatLong = Pickup;
       _controller!.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-          target: LatLng(departure.latitude, departure.longitude), zoom: 14)));
+          target: LatLng(Pickup.latitude, Pickup.longitude), zoom: 14)));
+      log("Pickup Lat  ==> $Pickup.latitude");
+      log("Pickup Lon  ==>$Pickup.longitude");
 
-      // _controller?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(departure.latitude, departure.longitude), zoom: 18)));
-      if (departureLatLong != null && destinationLatLong != null) {
+      // _controller?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(Pickup.latitude, Pickup.longitude), zoom: 18)));
+      if (PickupLatLong != null && destinationLatLong != null) {
         getDirections();
         controller.confirmWidgetVisible.value = true;
         // conformationBottomSheet(context);
@@ -667,6 +675,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Marker For Destination
   setDestinationMarker(LatLng destination) {
     setState(() {
       _markers['Destination'] = Marker(
@@ -677,7 +686,23 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       destinationLatLong = destination;
 
-      if (departureLatLong != null && destinationLatLong != null) {
+      log("destination Lat  ==> $destination.latitude");
+      log("destination Lon  ==>$destination.longitude");
+
+      // Camera Update
+      _controller!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(
+              destination.latitude,
+              destination.longitude,
+            ),
+            zoom: 14,
+          ),
+        ),
+      );
+
+      if (PickupLatLong != null && destinationLatLong != null) {
         getDirections();
         controller.confirmWidgetVisible.value = true;
         // conformationBottomSheet(context);
@@ -685,27 +710,28 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  setStopMarker(LatLng destination, int index) {
-    // final List<int> codeUnits = "Anand".codeUnits;
-    // final Uint8List unit8List = Uint8List.fromList(codeUnits);
-    // print('\x1b[97m ===== $unit8List =====');
-    setState(() {
-      _markers['Stop $index'] = Marker(
-        markerId: MarkerId('Stop $index'),
-        infoWindow:
-            InfoWindow(title: "Stop ${String.fromCharCode(index + 65)}"),
-        position: destination,
-        icon: stopIcon!,
-      ); //BitmapDescriptor.fromBytes(unit8List));
-      // destinationLatLong = destination;
-
-      if (departureLatLong != null && destinationLatLong != null) {
-        getDirections();
-        controller.confirmWidgetVisible.value = true;
-        // conformationBottomSheet(context);
-      }
-    });
-  }
+  //Stop Maker
+  // setStopMarker(LatLng destination, int index) {
+  //   // final List<int> codeUnits = "Anand".codeUnits;
+  //   // final Uint8List unit8List = Uint8List.fromList(codeUnits);
+  //   // print('\x1b[97m ===== $unit8List =====');
+  //   setState(() {
+  //     _markers['Stop $index'] = Marker(
+  //       markerId: MarkerId('Stop $index'),
+  //       infoWindow:
+  //           InfoWindow(title: "Stop ${String.fromCharCode(index + 65)}"),
+  //       position: destination,
+  //       icon: stopIcon!,
+  //     ); //BitmapDescriptor.fromBytes(unit8List));
+  //     // destinationLatLong = destination;
+  //
+  //     if (PickupLatLong != null && destinationLatLong != null) {
+  //       getDirections();
+  //       controller.confirmWidgetVisible.value = true;
+  //       // conformationBottomSheet(context);
+  //     }
+  //   });
+  // }
 
   Widget buildTextField(
       {required title, required TextEditingController textController}) {
@@ -726,39 +752,45 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   getDirections() async {
-    List<PolylineWayPoint> wayPointList = [];
-    for (var i = 0; i < controller.multiStopList.length; i++) {
-      wayPointList.add(PolylineWayPoint(
-          location: controller.multiStopList[i].editingController.text));
-    }
+    // List<PolylineWayPoint> wayPointList = [];
+    // for (var i = 0; i < controller.multiStopList.length; i++) {
+    //   wayPointList.add(PolylineWayPoint(
+    //       location: controller.multiStopList[i].editingController.text));
+    // }
     List<LatLng> polylineCoordinates = [];
 
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      Constant.kGoogleApiKey.toString(),
-      PointLatLng(departureLatLong!.latitude, departureLatLong!.longitude),
+      "AIzaSyBLmFR2N52rYflO8KuNNzlDJSqtIfG2YK0",
+      PointLatLng(PickupLatLong!.latitude, PickupLatLong!.longitude),
       PointLatLng(destinationLatLong!.latitude, destinationLatLong!.longitude),
-      wayPoints: wayPointList,
-      optimizeWaypoints: true,
+      // wayPoints: wayPointList,
+      // optimizeWaypoints: true,
       travelMode: TravelMode.driving,
     );
 
     if (result.points.isNotEmpty) {
-      for (var point in result.points) {
+      result.points.forEach((PointLatLng point) {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      }
+      });
+
+      // for (var point in result.points) {
+      //   polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+    } else {
+      log("${result.errorMessage}");
     }
 
     addPolyLine(polylineCoordinates);
+    log("$polylineCoordinates");
   }
 
   addPolyLine(List<LatLng> polylineCoordinates) {
     PolylineId id = const PolylineId("poly");
     Polyline polyline = Polyline(
       polylineId: id,
-      color: ConstantColors.yellow,
+      color: Colors.red,
       points: polylineCoordinates,
       width: 4,
-      geodesic: true,
+      // geodesic: true,
     );
     polyLines[id] = polyline;
     setState(() {});
@@ -792,7 +824,7 @@ class _HomeScreenState extends State<HomeScreen> {
               txtColor: Colors.white,
               onPress: () async {
                 await controller
-                    .getDurationDistance(departureLatLong!, destinationLatLong!)
+                    .getDurationDistance(PickupLatLong!, destinationLatLong!)
                     .then((durationValue) async {
                   if (durationValue != null) {
                     await controller
@@ -891,7 +923,7 @@ class _HomeScreenState extends State<HomeScreen> {
   //                       txtColor: Colors.white, onPress: () async {
   //                     await controller
   //                         .getDurationDistance(
-  //                             departureLatLong!, destinationLatLong!)
+  //                             PickupLatLong!, destinationLatLong!)
   //                         .then((durationValue) async {
   //                       if (durationValue != null) {
   //                         await controller
@@ -1451,8 +1483,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 await controller
                                     .getDriverDetails(
                                         controller.vehicleData!.id.toString(),
-                                        departureLatLong!.latitude.toString(),
-                                        departureLatLong!.longitude.toString())
+                                        PickupLatLong!.latitude.toString(),
+                                        PickupLatLong!.longitude.toString())
                                     .then((value) {
                                   if (value != null) {
                                     if (value.success == "Success") {
@@ -1779,9 +1811,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   'user_id':
                                       Preferences.getInt(Preferences.userId)
                                           .toString(),
-                                  'lat1': departureLatLong!.latitude.toString(),
-                                  'lng1':
-                                      departureLatLong!.longitude.toString(),
+                                  'lat1': PickupLatLong!.latitude.toString(),
+                                  'lng1': PickupLatLong!.longitude.toString(),
                                   'lat2':
                                       destinationLatLong!.latitude.toString(),
                                   'lng2':
@@ -1794,7 +1825,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   'id_conducteur': driverModel.id.toString(),
                                   'id_payment':
                                       controller.paymentMethodId.value,
-                                  'depart_name': departureController.text,
+                                  'depart_name': PickupController.text,
                                   'destination_name':
                                       destinationController.text,
                                   'stops': stopsList,
@@ -1823,10 +1854,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   if (value != null) {
                                     if (value['success'] == "success") {
                                       Get.back();
-                                      departureController.clear();
+                                      PickupController.clear();
                                       destinationController.clear();
                                       polyLines = {};
-                                      departureLatLong = null;
+                                      PickupLatLong = null;
                                       destinationLatLong = null;
                                       passengerController.clear();
                                       tripPrice = 0.0;
@@ -1900,13 +1931,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               'id_user_app':
                                   Preferences.getInt(Preferences.userId)
                                       .toString(),
-                              'lat1': departureLatLong!.latitude.toString(),
-                              'lng1': departureLatLong!.longitude.toString(),
+                              'lat1': PickupLatLong!.latitude.toString(),
+                              'lng1': PickupLatLong!.longitude.toString(),
                               'lat2': destinationLatLong!.latitude.toString(),
                               'lng2': destinationLatLong!.longitude.toString(),
                               'distance': controller.distance.value.toString(),
                               'distance_unit': Constant.distanceUnit.toString(),
-                              'depart_name': departureController.text,
+                              'depart_name': PickupController.text,
                               'destination_name': destinationController.text,
                               'fav_name': favouriteNameTextController.text,
                             };

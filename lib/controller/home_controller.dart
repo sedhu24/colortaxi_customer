@@ -144,14 +144,14 @@ class HomeController extends GetxController {
 
   /* Duration Distance */
   Future<dynamic> getDurationDistance(
-      LatLng departureLatLong, LatLng destinationLatLong) async {
+      LatLng PickupLatLong, LatLng destinationLatLong) async {
     ShowToastDialog.showLoader("Please wait");
     log("--->150");
-    log("$departureLatLong");
+    log("$PickupLatLong");
     log("$destinationLatLong");
     double originLat, originLong, destLat, destLong;
-    originLat = departureLatLong.latitude;
-    originLong = departureLatLong.longitude;
+    originLat = PickupLatLong.latitude;
+    originLong = PickupLatLong.longitude;
     destLat = destinationLatLong.latitude;
     destLong = destinationLatLong.longitude;
 

@@ -205,7 +205,7 @@ const Map<String, String> enUS = {
   'No': "No",
   'Are you sure you want to delete favourite ride?':
       "Are you sure you want to delete favourite ride?",
-  'Departure': "Departure",
+  'Pickup': "Pickup",
   'Back': "Back",
   'Where do you want to stop ?': "Where do you want to stop ?",
   'Add stop': "Add stop",
