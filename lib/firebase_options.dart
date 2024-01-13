@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -49,9 +46,19 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCyCRGON7UHa31hrQyNrgPFIDOjys3JFoM',
+    appId: '1:715814899425:web:95ce803ffe86ce214f31a0',
+    messagingSenderId: '715814899425',
+    projectId: 'colortaxi-customer',
+    authDomain: 'colortaxi-customer.firebaseapp.com',
+    storageBucket: 'colortaxi-customer.appspot.com',
+    measurementId: 'G-2QMGXXMJ7V',
+  );
+
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAvRAeiekddX0Jm5VOA6RYURAkivl6reJU',
-    appId: '1:715814899425:android:a1ea8e212c6f97384f31a0',
+    appId: '1:715814899425:android:26946998f20b74944f31a0',
     messagingSenderId: '715814899425',
     projectId: 'colortaxi-customer',
     storageBucket: 'colortaxi-customer.appspot.com',
@@ -59,7 +66,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBTTulfIN07XLpScih3hn-WpeKQnXiUJ8s',
-    appId: '1:715814899425:ios:1336b5139326ab7e4f31a0',
+    appId: '1:715814899425:ios:487c647267762e064f31a0',
     messagingSenderId: '715814899425',
     projectId: 'colortaxi-customer',
     storageBucket: 'colortaxi-customer.appspot.com',
